@@ -10,3 +10,5 @@ sudo nohup docker run -d --name scalityconnect -p 8000:8000 \
 -e AZURE_STORAGE_ACCOUNT=$STORAGE_ACCESS_ACCOUNT \
 --log-opt max-size=5g --log-opt max-file=10 \
 --restart always scality/connect &
+
+./run.sh $4
