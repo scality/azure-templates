@@ -1,0 +1,7 @@
+# Deployment Templates
+azuredeploy.parameters.*
+
+#Keys
+*.crt
+*.key
+*.csr
