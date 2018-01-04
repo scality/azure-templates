@@ -60,4 +60,4 @@ az group deployment create \
 To deploy this template through the Azure portal web interface, please use the
 "Deploy to Azure" button at the bottom of this page.
 
-[![](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FScality%2Fazure-templates%2Fssl-cert%2Fenterprise%2Fazuredeploy.json)
+[![](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FScality%2Fazure-templates%2Fmaster%2Fenterprise%2Fazuredeploy.json)
