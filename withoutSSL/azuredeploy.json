@@ -60,42 +60,6 @@
         "metadata": {
           "description": "Your ssh public key."
         }
-      },
-      "vaultResourceGroup": {
-          "type": "string",
-          "metadata": {
-              "description": "Resource Group of keyvault"
-          }
-      },
-      "vaultName": {
-          "type": "string",
-          "metadata": {
-              "description": "Name of keyvault"
-          }
-      },
-      "httpssecretCaUrlWithVersion": {
-          "type": "string",
-          "metadata": {
-              "description": "full Key Vault Id to the secret that stores the CA cert"
-          }
-      },
-      "caCertThumbPrint": {
-          "type": "string",
-          "metadata": {
-              "description": "fingerprint of the CA cert"
-          }
-      },
-      "CACertSAS": {
-          "type": "securestring",
-          "metadata": {
-              "description": "SAS url for CA signed certificates"
-          }
-      },
-      "domainName": {
-          "type": "string",
-          "metadata": {
-              "description": "Registered Domain Name"
-          }
       }
     },
     "variables": {
@@ -117,14 +81,18 @@
       "nicName": "[concat(variables('namingInfix'), 'nic')]",
       "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
       "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
-      "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]"
+      "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+      "computeApiVersion": "2017-03-30",
+      "networkApiVersion": "2017-04-01",
+      "storageApiVersion": "2015-06-15",
+      "insightsApiVersion": "2015-04-01"
     },
     "resources": [
       {
         "type": "Microsoft.Network/virtualNetworks",
         "name": "[variables('virtualNetworkName')]",
         "location": "[resourceGroup().location]",
-        "apiVersion": "2017-06-01",
+        "apiVersion": "2017-04-01",
         "properties": {
           "addressSpace": {
             "addressPrefixes": [
@@ -145,7 +113,7 @@
         "type": "Microsoft.Network/publicIPAddresses",
         "name": "[variables('publicIPAddressName')]",
         "location": "[resourceGroup().location]",
-        "apiVersion": "2017-06-01",
+        "apiVersion": "2017-04-01",
         "properties": {
           "publicIPAllocationMethod": "Dynamic",
           "dnsSettings": {
@@ -157,7 +125,7 @@
         "type": "Microsoft.Network/loadBalancers",
         "name": "[variables('loadBalancerName')]",
         "location": "[resourceGroup().location]",
-        "apiVersion": "2016-03-30",
+        "apiVersion": "2017-04-01",
         "dependsOn": [
           "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
         ],
@@ -179,24 +147,24 @@
           ],
           "loadBalancingRules": [
             {
-              "name": "scalityrule",
-              "properties": {
-                "frontendIPConfiguration": {
-                  "id": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]"
-                },
-                "frontendPort": 443,
-                "backendPort": 443,
-                "enableFloatingIP": false,
-                "idleTimeoutInMinutes": 4,
-                "protocol": "Tcp",
-                "loadDistribution": "Default",
-                "backendAddressPool": {
-                  "id": "[concat(variables('lbID'), '/backendAddressPools/', variables('bePoolName'))]"
-                },
-                "probe": {
-                  "id": "[concat(variables('lbID'), '/probes/', 'scalityprobe')]"
+                "name": "scalityrule",
+                "properties": {
+                    "frontendIPConfiguration": {
+                        "id": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+                    },
+                    "frontendPort": 80,
+                    "backendPort": 8000,
+                    "enableFloatingIP": false,
+                    "idleTimeoutInMinutes": 4,
+                    "protocol": "Tcp",
+                    "loadDistribution": "Default",
+                    "backendAddressPool": {
+                        "id": "[concat(variables('lbID'), '/backendAddressPools/', variables('bePoolName'))]"
+                    },
+                    "probe": {
+                        "id": "[concat(variables('lbID'), '/probes/', 'scalityprobe')]"
+                    }
                 }
-              }
             }
         ],
         "probes": [
@@ -204,7 +172,7 @@
                 "name": "scalityprobe",
                 "properties": {
                     "protocol": "Tcp",
-                    "port": 8005,
+                    "port": 22,
                     "intervalInSeconds": 5,
                     "numberOfProbes": 2
                 }
@@ -267,7 +235,7 @@
                     "typeHandlerVersion": "2.0",
                     "autoUpgradeMinorVersion": true,
                     "protectedSettings": {
-                      "commandToExecute": "[concat('/var/scality/nginxconfiguressl.sh ', parameters('storageAccountName'), ' ', parameters('storageAccountAccessKey'), ' \"', parameters('domainName'), '\" ', parameters('caCertThumbPrint'), ' \"', parameters('CACertSAS'), '\"')]"
+                      "commandToExecute": "[concat('/var/scality/run.sh ', parameters('storageAccountName'), ' ', parameters('storageAccountAccessKey'), ' ', variables('longNamingInfix'), '.' , resourceGroup().location, '.cloudapp.azure.com')]"
                     }
                   }
                 }
@@ -286,19 +254,7 @@
                         }
                     ]
                 }
-              },
-              "secrets": [
-                  {
-                      "sourceVault": {
-                          "id": "[resourceId(parameters('vaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('vaultName'))]"
-                      },
-                      "vaultCertificates": [
-                          {
-                               "certificateUrl": "[parameters('httpssecretCaUrlWithVersion')]"
-                          }
-                      ]
-                  }
-              ]
+              }
             },
             "networkProfile": {
               "networkInterfaceConfigurations": [
